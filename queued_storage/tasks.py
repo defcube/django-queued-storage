@@ -1,10 +1,23 @@
 from django.core.cache import cache
 
 from celery.task import Task
+from celery.decorators import task
 
 from queued_storage.conf import settings
 from queued_storage.signals import file_transferred
 from queued_storage.utils import import_attribute
+
+
+@task()
+def set_queued_storage(name, cache_key,
+                       local_path, remote_path,
+                       local_options, remote_options, **kwargs):
+    remote = import_attribute(remote_path)(**remote_options)
+    exists = remote.exists(name)
+    cache.set(cache_key, exists)
+    if not exists:
+        Transfer.delay(name, cache_key, local_path, remote_path,
+                       local_options, remote_options)
 
 
 class Transfer(Task):

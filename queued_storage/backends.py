@@ -112,15 +112,24 @@ class QueuedStorage(object):
         cache_result = cache.get(self.get_cache_key(name))
         if cache_result:
             return self.remote
+        elif cache_result is None and self.remote.exists(name):
+            cache.set(self.get_cache_key(name), True)
+            return self.remote
         else:
-            if cache_result is None:
-                if self._acquire_update_storage_cache_lock(name):
-                    from tasks import set_queued_storage
-                    set_queued_storage.delay(
-                        name, self.get_cache_key(name),
-                        self.local_path, self.remote_path,
-                        self.local_options, self.remote_options)
             return self.local
+
+        # cache_result = cache.get(self.get_cache_key(name))
+        # if cache_result:
+        #     return self.remote
+        # else:
+        #     if cache_result is None:
+        #         if self._acquire_update_storage_cache_lock(name):
+        #             from tasks import set_queued_storage
+        #             set_queued_storage.delay(
+        #                 name, self.get_cache_key(name),
+        #                 self.local_path, self.remote_path,
+        #                 self.local_options, self.remote_options)
+        #     return self.local
 
     def _acquire_update_storage_cache_lock(self, name):
         cache_key = '%sIsUpdating_%s' % (

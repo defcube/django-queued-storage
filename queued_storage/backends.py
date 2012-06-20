@@ -112,11 +112,11 @@ class QueuedStorage(object):
         cache_result = cache.get(self.get_cache_key(name))
         if cache_result:
             return self.remote
-        elif cache_result is None and self.remote.exists(name):
+        if self.local.exists(name):
+            return self.local
+        else:
             cache.set(self.get_cache_key(name), True)
             return self.remote
-        else:
-            return self.local
 
         # cache_result = cache.get(self.get_cache_key(name))
         # if cache_result:
